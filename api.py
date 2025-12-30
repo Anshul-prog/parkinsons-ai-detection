@@ -9,13 +9,10 @@ app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_credentials=False,
+    allow_methods=["*"],
     allow_headers=["*"],
 )
-@app.options("/{rest_of_path:path}")
-async def preflight_handler(rest_of_path: str):
-    return {}
 
 
 
@@ -25,8 +22,8 @@ class PatientData(BaseModel):
     features: list
 
 @app.post("/predict")
-def predict(data: PatientData):
-    arr = np.array(data.features).reshape(1, -1)
-    prediction = int(model.predict(arr)[0])
-    probability = float(model.predict_proba(arr)[0][1])
-    return {"prediction": prediction, "confidence": probability}
+async def predict(data: PatientData):
+    features = np.array(data.features).reshape(1, -1)
+    prediction = model.predict(features)[0]
+    confidence = float(max(model.predict_proba(features)[0]))
+    return {"prediction": int(prediction), "confidence": confidence}
